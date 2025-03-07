@@ -1,0 +1,8 @@
+flask
+flask-wtf
+opencv-python
+numpy
+google-generativeai
+pillow
+speechrecognition
+python-dotenv
