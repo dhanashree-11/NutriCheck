@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredient Comparison</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <h1 class="logo">NutriCheck</h1>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="{{ url_for('nutritional_analysis') }}">Nutritional Analysis</a></li>
+            <li><a href="/compare-ingredients">Ingredient Comparison</a></li>
+        </ul>
+    </nav>
+    
+    <div class="container">
+        <h1>Ingredient Comparison</h1>
+
+        <!-- Upload Form -->
+        <form action="/compare-ingredients" method="post" enctype="multipart/form-data">
+            
+            <!-- First Ingredient List -->
+            <h2>First Ingredient List</h2>
+            <label for="file1">Upload First Ingredient List:</label>
+            <input type="file" name="file1" id="file1" accept="image/*">
+            <button type="button" id="start-camera1">📸 Open Camera</button>
+            <video id="video1" width="400" height="300" autoplay style="display:none;"></video>
+            <button type="button" id="capture1" style="display:none;">Capture</button>
+            <canvas id="canvas1" style="display:none;"></canvas>
+            <img id="captured-image1" style="display:none; width: 300px; margin-top: 10px;" alt="Captured Image">
+            <input type="hidden" name="camera_image1" id="camera_image1">
+
+            <br><br>
+
+            <!-- Second Ingredient List -->
+            <h2>Second Ingredient List</h2>
+            <label for="file2">Upload Second Ingredient List:</label>
+            <input type="file" name="file2" id="file2" accept="image/*">
+            <button type="button" id="start-camera2">📸 Open Camera</button>
+            <video id="video2" width="400" height="300" autoplay style="display:none;"></video>
+            <button type="button" id="capture2" style="display:none;">Capture</button>
+            <canvas id="canvas2" style="display:none;"></canvas>
+            <img id="captured-image2" style="display:none; width: 300px; margin-top: 10px;" alt="Captured Image">
+            <input type="hidden" name="camera_image2" id="camera_image2">
+
+            <br><br>
+
+            <button type="submit" class="btn">Compare</button>
+        </form>
+
+        <br><br>
+
+        {% if response1 and response2 %}
+            <!-- First Ingredient Analysis -->
+            <h2>📜 First Ingredient List Analysis</h2>
+            <div class="analysis-result">{{ response1 | safe }}</div>
+
+            <br>
+
+            <!-- Second Ingredient Analysis -->
+            <h2>📜 Second Ingredient List Analysis</h2>
+            <div class="analysis-result">{{ response2 | safe }}</div>
+
+            <br>
+
+            <!-- Structured Comparison Table -->
+            {% if comparison_data %}
+                <h2>⚖ Comparison Table</h2>
+                <table border="1">
+                    <tr>
+                        <th>Criteria</th>
+                        <th>First Ingredient List</th>
+                        <th>Second Ingredient List</th>
+                    </tr>
+                    {% for i in range(comparison_data["Criteria"]|length) %}
+                    <tr>
+                        <td>{{ comparison_data["Criteria"][i] }}</td>
+                        <td>{{ comparison_data["Ingredient 1"][i] }}</td>
+                        <td>{{ comparison_data["Ingredient 2"][i] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
+            <br>
+
+            <h2>🏆 Overall Verdict</h2>
+            <div class="verdict-box">
+                {{ verdict | safe }}
+            </div>
+            
+            
+
+        {% else %}
+            <p class="error-message">⚠ No ingredient comparison data available. Please upload images and try again.</p>
+        {% endif %}
+
+    </div>
+
+    <script>
+        function setupCamera(buttonId, videoId, captureButtonId, canvasId, imageInputId, imageId) {
+            const startCameraButton = document.getElementById(buttonId);
+            const video = document.getElementById(videoId);
+            const captureButton = document.getElementById(captureButtonId);
+            const canvas = document.getElementById(canvasId);
+            const cameraImageInput = document.getElementById(imageInputId);
+            const capturedImage = document.getElementById(imageId);
+            let stream = null;
+            let isCameraOn = false;
+
+            // Function to toggle the camera
+            startCameraButton.addEventListener('click', function() {
+                if (!isCameraOn) {
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(videoStream) {
+                            stream = videoStream;
+                            video.srcObject = stream;
+                            video.style.display = "block";
+                            captureButton.style.display = "block";
+                            isCameraOn = true;
+                        })
+                        .catch(function(error) {
+                            console.error("Error accessing camera:", error);
+                        });
+                } else {
+                    stream.getTracks().forEach(track => track.stop());  // Stop the video stream
+                    video.srcObject = null;
+                    video.style.display = "none";
+                    captureButton.style.display = "none";
+                    isCameraOn = false;
+                }
+            });
+
+            // Function to capture and resize the image
+            captureButton.addEventListener('click', function() {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                let imageData = canvas.toDataURL("image/jpeg", 0.8);
+                cameraImageInput.value = imageData;
+
+                capturedImage.src = imageData;
+                capturedImage.style.display = "block";
+
+                stream.getTracks().forEach(track => track.stop());
+                video.style.display = "none";
+                captureButton.style.display = "none";
+                isCameraOn = false;
+            });
+        }
+
+        // Set up cameras for both ingredient inputs
+        setupCamera("start-camera1", "video1", "capture1", "canvas1", "camera_image1", "captured-image1");
+        setupCamera("start-camera2", "video2", "capture2", "canvas2", "camera_image2", "captured-image2");
+    </script>
+
+</body>
+</html>

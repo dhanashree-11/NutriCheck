@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriCheck</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <h1 class="logo">NutriCheck</h1>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="{{ url_for('nutritional_analysis') }}">Nutritional Analysis</a></li>
+            <li><a href="{{ url_for('ingredient_analysis') }}">Ingredient Analysis</a></li>  <!-- ✅ Added this -->
+            <li><a href="/compare-ingredients">Ingredient Comparison</a></li>
+        </ul>
+    </nav>
+
+    <!-- Home Section with Background Image -->
+    <header class="hero">
+        <div class="hero-content">
+            <div class="blur-box">
+                <h3>Welcome to</h3>
+                <h1>NutriCheck</h1>
+                <p>Nutrition With Taste is all about helping you live a healthy, fulfilling life. I combine nutrition science and life coaching to provide personalised strategies for wellness and lifestyle improvement. My holistic approach focuses on enhancing overall well-being and creating personalised health plans to manage specific conditions.</p>
+                <a href="#analysis" class="scroll-down">
+                    <span class="arrow">&#x2193;</span>
+                </a>
+            </div>
+        </div>
+    </header>
+    
+</body>
+</html>

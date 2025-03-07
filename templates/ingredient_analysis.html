@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingredient Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <h1 class="logo">NutriCheck</h1>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="{{ url_for('nutritional_analysis') }}">Nutritional Analysis</a></li>
+        <li><a href="{{ url_for('compare_ingredients') }}">Ingredient Comparison</a></li>
+    </ul>
+</nav>
+
+<!-- Upload Section -->
+<section class="upload-section">
+    <h2>Upload or Capture an Ingredient List</h2>
+    
+    <!-- Image Upload Option -->
+    <form action="/ingredient-analysis" method="post" enctype="multipart/form-data">
+        <label for="file">Upload an Image of Ingredient List:</label>
+        <input type="file" name="file" id="file" accept="image/*">
+        
+        <br><br>
+
+        <!-- Camera Capture Button -->
+        <button type="button" id="start-camera">📸 Open Camera</button>
+        <video id="video" width="400" height="300" autoplay style="display:none;"></video>
+        <button type="button" id="capture" style="display:none;">Capture</button>
+        <canvas id="canvas" style="display:none;"></canvas>
+        
+        <!-- Captured Image Preview -->
+        <img id="captured-image" style="display:none; width: 300px; margin-top: 10px;" alt="Captured Image">
+        
+        <!-- Hidden Input for Base64 Image -->
+        <input type="hidden" name="camera_image" id="camera_image">
+
+        <br><br>
+
+        <button type="submit" class="btn">Analyze Ingredients</button>
+    </form>
+</section>
+
+<script>
+    const startCameraButton = document.getElementById('start-camera');
+    const video = document.getElementById('video');
+    const captureButton = document.getElementById('capture');
+    const canvas = document.getElementById('canvas');
+    const cameraImageInput = document.getElementById('camera_image');
+    const capturedImage = document.getElementById('captured-image');
+    let stream = null;  // Store camera stream
+    let isCameraOn = false;  // Track camera status
+
+    // Function to toggle the camera
+    startCameraButton.addEventListener('click', function() {
+        if (!isCameraOn) {
+            // Open camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(videoStream) {
+                    stream = videoStream;
+                    video.srcObject = stream;
+                    video.style.display = "block";
+                    captureButton.style.display = "block";
+                    isCameraOn = true;
+                })
+                .catch(function(error) {
+                    console.error("Error accessing camera:", error);
+                });
+        } else {
+            // Close camera
+            stream.getTracks().forEach(track => track.stop());  // Stop the video stream
+            video.srcObject = null;
+            video.style.display = "none";
+            captureButton.style.display = "none";
+            isCameraOn = false;
+        }
+    });
+
+    // Function to capture and resize the image
+    captureButton.addEventListener('click', function() {
+        const MAX_WIDTH = 640;  // Resize width
+        const MAX_HEIGHT = 480; // Resize height
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Resize Image
+        let width = canvas.width;
+        let height = canvas.height;
+
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+            if (width > height) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+            } else {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+            }
+        }
+
+        const resizedCanvas = document.createElement('canvas');
+        resizedCanvas.width = width;
+        resizedCanvas.height = height;
+        resizedCanvas.getContext('2d').drawImage(canvas, 0, 0, width, height);
+
+        // Convert resized image to Base64
+        let imageData = resizedCanvas.toDataURL("image/jpeg", 0.7);  // Compress image
+        cameraImageInput.value = imageData;  // Store Base64 image in hidden input
+        
+        capturedImage.src = imageData;
+        capturedImage.style.display = "block";  // Show captured image
+        
+        // Stop the camera stream after capturing
+        stream.getTracks().forEach(track => track.stop());
+        video.style.display = "none";
+        captureButton.style.display = "none";
+        isCameraOn = false;  // Reset camera status
+    });
+</script>
+
+
+</body>
+</html>
